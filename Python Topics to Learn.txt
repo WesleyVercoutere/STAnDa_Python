@@ -1,0 +1,7 @@
+Python topics:
+
+1. decorator
+2. context managers
+3. closures
+
+https://www.youtube.com/c/Coreyms
