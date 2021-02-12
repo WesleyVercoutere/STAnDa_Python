@@ -32,7 +32,7 @@ class Chart:
 
         # User settings
         self.nbrOfSections = 10
-        self.filterFFT = 80
+        self.filterFFT = 0
         self.nbrOfTwistLengthsForMovingAvg = 50        
 
 # region Open files
@@ -55,15 +55,16 @@ class Chart:
             stId = filename[2]
             speed = filename[4]
 
-            # Only for Dixie - wrong id for st 11
-            if gmsId == "GMS11" and stId == "26134.10":
-                stId = "26134.11"
+            if stId == self.machineId:
+                # Only for Dixie - wrong id for st 11
+                if gmsId == "GMS11" and stId == "26134.10":
+                    stId = "26134.11"
 
-            localDf["gmsId"] = gmsId
-            localDf["stId"] = stId
-            localDf["speed"] = speed
+                localDf["gmsId"] = gmsId
+                localDf["stId"] = stId
+                localDf["speed"] = speed
 
-            self.dfs.append(localDf)
+                self.dfs.append(localDf)
 
         except:
             print(f"error in file: {file}")
@@ -137,6 +138,7 @@ class Chart:
         dfFull = self.groupByArg(dfForSingleSpeed, "speed", "Full")
 
         df = pd.concat([dfTurtle, dfBuffer, dfFull], ignore_index=True)
+        # df = pd.concat([dfTurtle, dfFull], ignore_index=True)
         df.sort_values(by=['time'], inplace=True)
 
         dfS = self.groupByArg(df, "SZ", "TwistS_").reset_index(drop=True)
@@ -230,23 +232,27 @@ class Chart:
 # endregion
 
     def main(self):
+        print("Open files ...")
         self.openFiles()
 
         # Concatenate all data into one DataFrame
         self.rawData = pd.concat(self.dfs, ignore_index=True)
 
         # Update raw data table
+        print("Update original data frame ...")
         self.addAvgTpm()
         self.addDateTime()
         self.sortData()
         self.removNullValues()
 
         # Split data in data frames for chart
+        print("Split data in separate data frames ...")
         self.dataFrameForEachSpeed()
         self.dataFrameForMovingAverage()
         self.dataFrameForMovingAveragePerSpeed()
         
         # Show chart
+        print("Plot chart ...")
         self.showSubPlot()
 
 
@@ -261,12 +267,14 @@ if __name__ == "__main__":
     #     chart = Chart(id)
     #     chart.main()
 
+    # path = f"E:\\Gilbos Machines\\SmarTwist\\CTS\\20210107_Dixie\\csv\\W2021_1 per ST"    
+    # id = "26134.1"
+    # path = f"{path}\\{id}"
 
-    path = f"E:\\Gilbos Machines\\SmarTwist\\CTS\\Logging CTS Dixie december 2020\\csv\\W2021_1 per ST"    
+    path = r"E:\Gilbos Machines\SmarTwist\CTS\20210211_Dixie\W2021_6"
     id = "26134.1"
-    path = f"{path}\\{id}"
-    
-    # path = f"E:\\Gilbos Machines\\SmarTwist\\CTS\\20210209_DemoData\\run4\\W2021_6"
+
+    # path = r"E:\Gilbos Machines\SmarTwist\CTS\20210211_DemoData\cts tEST 11022021\test 4"
     # id = "26040.99"
 
     chart = Chart(path, id)

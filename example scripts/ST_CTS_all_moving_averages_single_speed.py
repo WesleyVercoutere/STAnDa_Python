@@ -38,7 +38,7 @@ class Chart:
         # User settings
         self.machineId = id
         self.nbrOfSections = 10
-        self.filterFFT = 80
+        self.filterFFT = 0
         self.nbrOfTwistLengthsForMovingAvg = 50
 
     def openFiles(self):
@@ -105,6 +105,7 @@ class Chart:
 
     def splitData(self):
         groupbyMachineId = self.df.groupby(self.df.stId)
+        ids = sorted(self.idSet)
 
         for id in self.idSet:
             dfMachine = groupbyMachineId.get_group(id)
@@ -137,7 +138,7 @@ class Chart:
     def showSubPlot(self):
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex = True, sharey = True)
 
-        fig.suptitle(f"CTS - {self.selectedSpeed}\nPercentage used FFT : {self.percentageFFtUsed:.1f}%")
+        fig.suptitle(f"CTS - ST {self.machineId} - All speeds\nPercentage used FFT : {self.percentageFFtUsed:.1f}%\nFFT > {self.filterFFT}")
 
         for item in self.dfChartS:
             ax1.plot(self.dfChartS[item]['MovingAvg'], label = item) # self.dfChartS[item]['MovingAvg'], label = item)
@@ -182,8 +183,8 @@ class Chart:
 
 
 if __name__ == "__main__":
-    path = r"E:\Gilbos Machines\SmarTwist\CTS\Logging CTS Dixie december 2020\csv\W2021_1"
-    speed = "Turtle"
+    path = r"E:\Gilbos Machines\SmarTwist\CTS\20210211_Dixie\W2021_6"
+    speed = "Buffer"
 
     chart = Chart(path, speed)
     chart.main()
