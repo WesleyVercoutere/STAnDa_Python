@@ -1,2 +1,3 @@
 # STAnDa_Python
-SmarTwist data analysis tool
+SmarTwist®
+ data analysis tool
