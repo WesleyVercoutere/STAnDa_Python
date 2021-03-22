@@ -183,7 +183,7 @@ class Chart:
 
 
 if __name__ == "__main__":
-    path = r"E:\Gilbos Machines\SmarTwist\CTS\20210211_Dixie\W2021_6"
+    path = r"E:\Gilbos Machines\SmarTwist\CTS\20210212_Dixie\W2021_6"
     speed = "Buffer"
 
     chart = Chart(path, speed)

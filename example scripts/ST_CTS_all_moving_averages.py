@@ -35,10 +35,11 @@ class Chart:
         # User settings
         self.machineId = id
         self.nbrOfSections = 10
-        self.filterFFT = 80
+        self.filterFFT = 0
         self.nbrOfTwistLengthsForMovingAvg = 50
 
-        self.path = r"E:\Gilbos Machines\SmarTwist\CTS\Logging CTS Dixie december 2020\csv\W2021_1"
+        # self.path = r"E:\Gilbos Machines\SmarTwist\CTS\20210212_Dixie\W2021_6 - kopie"
+        self.path = r"E:\Gilbos Machines\SmarTwist\CTS\20200218_Dixie\W2021_7"
         # self.path = r"E:\Gilbos Machines\SmarTwist\CTS\Logging CTS Dixie december 2020\csv\W2021_1 per ST\test"
         # self.path = r"E:\\Gilbos Machines\\SmarTwist\\CTS\\Logging CTS Dixie december 2020\\csv\\W2021_1"
 
