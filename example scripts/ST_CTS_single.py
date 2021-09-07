@@ -73,7 +73,10 @@ class Chart:
         self.df["time"] = self.df.apply(lambda x: self.calculateDateTime(x['DT']), axis=1)
 
     def calculateDateTime(self, dt):
-        return(datetime.datetime.strptime(dt, '%Y-%m-%d-%H:%M:%S.%f'))
+        try:
+            return(datetime.datetime.strptime(dt, '%Y-%m-%d-%H:%M:%S.%f'))
+        except:
+            print(f"Not a valid date time string: {dt}")
 
     def sortData(self):
         self.df.sort_values(by=['time'], inplace=True)
@@ -122,11 +125,14 @@ class Chart:
 
 
     def main(self):
+        print("Open files")
         self.openFiles()
 
         # Concatenate all data into one DataFrame
+        print("Concatenate data")
         self.df = pd.concat(self.dfs, ignore_index=True)
 
+        print("Prepare data")
         self.addAvgTpm()
         self.addDateTime()
         self.sortData()
@@ -142,23 +148,15 @@ class Chart:
 
 if __name__ == "__main__":
 
+    path = r"E:\Gilbos Machines\SmarTwist\Maintenance\20210611 Dixie\W2021_23"
+
     # Create chart for each ST.
-    # ids = [1,2,4,6,7,8,9,10,11,12,14]
+    ids = [1,2,4,6,7,8,9,10,11,12,14]
 
-    # for i in ids:
-    #     id = f"26134.{i}"
+    for i in ids:
+        id = f"26134.{i}"
 
-    #     chart = Chart(id)
-    #     chart.main()
+        chart = Chart(path, id)
+        chart.main()
 
-    # self.path = f"E:\\Gilbos Machines\\SmarTwist\\CTS\\Logging CTS Dixie december 2020\\csv\\W2021_1 per ST\\{self.machineId}"
-    # self.path = r"E:\Gilbos Machines\SmarTwist\CTS\Logging CTS Dixie december 2020\csv\W2021_1 per ST\test"
-    # self.path = r"E:\\Gilbos Machines\\SmarTwist\\CTS\\Logging CTS Dixie december 2020\\csv\\W2021_1"
 
-    path = f"E:\\Gilbos Machines\\SmarTwist\\CTS\\Logging CTS Dixie december 2020\\csv\\W2021_1 per ST"
-    id = "26134.10"
-
-    path = f"{path}\\{id}"
-
-    chart = Chart(path, id)
-    chart.main()

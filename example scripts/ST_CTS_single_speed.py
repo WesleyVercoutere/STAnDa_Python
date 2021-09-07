@@ -21,7 +21,7 @@ class Chart:
         self.machineId = id
 
         # only for debugging
-        pd.set_option('display.max_rows', None)
+        # pd.set_option('display.max_rows', None)
 
         mgr = Manager()
         self.dfs = mgr.list()
@@ -33,7 +33,16 @@ class Chart:
         # User settings
         self.nbrOfSections = 10
         self.filterFFT = 80
-        self.nbrOfTwistLengthsForMovingAvg = 50    
+        self.nbrOfTwistLengthsForMovingAvg = 50
+
+        self.dfUnknownTwistS = None
+        self.dfUnknownTwistZ = None
+        self.dfTurtleTwistS = None
+        self.dfTurtleTwistZ = None
+        self.dfBufferTwistS = None
+        self.dfBufferTwistZ = None
+        self.dfFullTwistS = None
+        self.dfFullTwistZ = None
 
 # region Open files
 
@@ -79,13 +88,13 @@ class Chart:
         prefixFreq = "f"
         prefixFFT = "FT"
 
-        for i in range(1, (self.nbrOfSections + 1)):
+        for i in range(4, (self.nbrOfSections + 1)):
 
-            if row["Speed"] != "Unknown":
+            if row["V"] != "Unknown":
                 self.totalFFt += 1
 
             if row[f"{prefixFFT}{i}"] > self.filterFFT:
-                if row["Speed"] != "Unknown":
+                if row["V"] != "Unknown":
                     self.usedFFT += 1
                 
                 values.append(row[f"{prefixFreq}{i}"])
@@ -116,32 +125,75 @@ class Chart:
 # region Data frames
 
     def dataFrameForEachSpeed(self):
-        dfForSingleSpeed = self.rawData.filter(["time", "avg_tpm", "SZ", "Speed"])
+        dfForSingleSpeed = self.rawData.filter(["time", "avg_tpm", "SZ", "V"])
         dfForSingleSpeed = self.addNanRow(dfForSingleSpeed).reset_index(drop=True)
 
-        dfUnknown = self.groupByArg(dfForSingleSpeed, "Speed", "Unknown")
-        dfTurtle = self.groupByArg(dfForSingleSpeed, "Speed", "Turtle")
-        dfBuffer = self.groupByArg(dfForSingleSpeed, "Speed", "Buffer")
-        dfFull = self.groupByArg(dfForSingleSpeed, "Speed", "Full")
+        # result = x if a > b else y
+
+        try:
+            dfUnknown = self.groupByArg(dfForSingleSpeed, "V", "Unknown")
+
+            self.dfUnknownTwistS = self.groupByArg(dfUnknown, "SZ", "TwistS_").reset_index(drop=True)
+            self.dfUnknownTwistZ = self.groupByArg(dfUnknown, "SZ", "TwistZ_").reset_index(drop=True)
+
+        except:
+            pass
+            
+        try:
+            dfTurtle = self.groupByArg(dfForSingleSpeed, "V", "Turtle")
+
+            self.dfTurtleTwistS = self.groupByArg(dfTurtle, "SZ", "TwistS_").reset_index(drop=True)
+            self.dfTurtleTwistZ = self.groupByArg(dfTurtle, "SZ", "TwistZ_").reset_index(drop=True)
+
+        except:
+            pass
         
-        self.dfUnknownTwistS = self.groupByArg(dfUnknown, "SZ", "TwistS_").reset_index(drop=True)
-        self.dfUnknownTwistZ = self.groupByArg(dfUnknown, "SZ", "TwistZ_").reset_index(drop=True)
-        self.dfTurtleTwistS = self.groupByArg(dfTurtle, "SZ", "TwistS_").reset_index(drop=True)
-        self.dfTurtleTwistZ = self.groupByArg(dfTurtle, "SZ", "TwistZ_").reset_index(drop=True)
-        self.dfBufferTwistS = self.groupByArg(dfBuffer, "SZ", "TwistS_").reset_index(drop=True)
-        self.dfBufferTwistZ = self.groupByArg(dfBuffer, "SZ", "TwistZ_").reset_index(drop=True)
-        self.dfFullTwistS = self.groupByArg(dfFull, "SZ", "TwistS_").reset_index(drop=True)
-        self.dfFullTwistZ = self.groupByArg(dfFull, "SZ", "TwistZ_").reset_index(drop=True)
+        try:
+            dfBuffer = self.groupByArg(dfForSingleSpeed, "V", "Buffer")
+
+            self.dfBufferTwistS = self.groupByArg(dfBuffer, "SZ", "TwistS_").reset_index(drop=True)
+            self.dfBufferTwistZ = self.groupByArg(dfBuffer, "SZ", "TwistZ_").reset_index(drop=True)
+
+        except:
+            pass
+            
+        try:
+            dfFull = self.groupByArg(dfForSingleSpeed, "V", "Full")
+
+            self.dfFullTwistS = self.groupByArg(dfFull, "SZ", "TwistS_").reset_index(drop=True)
+            self.dfFullTwistZ = self.groupByArg(dfFull, "SZ", "TwistZ_").reset_index(drop=True)
+
+        except:
+            pass
+        
 
     def dataFrameForMovingAverage(self):
-        dfForSingleSpeed = self.rawData.filter(["time", "avg_tpm", "SZ", "Speed"])
-        dfTurtle = self.groupByArg(dfForSingleSpeed, "Speed", "Turtle")
-        dfBuffer = self.groupByArg(dfForSingleSpeed, "Speed", "Buffer")
-        dfFull = self.groupByArg(dfForSingleSpeed, "Speed", "Full")
+        frames = []
+        dfForSingleSpeed = self.rawData.filter(["time", "avg_tpm", "SZ", "V"])
+        
+        try:
+            dfTurtle = self.groupByArg(dfForSingleSpeed, "V", "Turtle")
+            frames.append(dfTurtle)
 
-        df = pd.concat([dfTurtle, dfBuffer, dfFull], ignore_index=True)
-        # df = pd.concat([dfTurtle, dfFull], ignore_index=True)
-        # df = pd.concat([dfTurtle], ignore_index=True)
+        except:
+            pass
+
+
+        try:
+            dfBuffer = self.groupByArg(dfForSingleSpeed, "V", "Buffer")
+            frames.append(dfBuffer)
+
+        except:
+            pass
+
+        try:
+            dfFull = self.groupByArg(dfForSingleSpeed, "V", "Full")
+            frames.append(dfFull)
+
+        except:
+            pass
+
+        df = pd.concat(frames, ignore_index=True)
         df.sort_values(by=['time'], inplace=True)
 
         dfS = self.groupByArg(df, "SZ", "TwistS_").reset_index(drop=True)
@@ -151,31 +203,36 @@ class Chart:
         self.dfMovingAvgAllZ = self.calculateMovingAverage(dfZ)
 
     def dataFrameForMovingAveragePerSpeed(self):
-        dfForSingleSpeed = self.rawData.filter(["time", "avg_tpm", "SZ", "Speed"])
-        dfTurtle = self.groupByArg(dfForSingleSpeed, "Speed", "Turtle")
-        dfBuffer = self.groupByArg(dfForSingleSpeed, "Speed", "Buffer")
+        dfForSingleSpeed = self.rawData.filter(["time", "avg_tpm", "SZ", "V"])
+        dfTurtle = self.groupByArg(dfForSingleSpeed, "V", "Turtle")
+        dfBuffer = self.groupByArg(dfForSingleSpeed, "V", "Buffer")
+        dfFull = self.groupByArg(dfForSingleSpeed, "V", "Full")
 
         dfTurtleS = self.groupByArg(dfTurtle, "SZ", "TwistS_").reset_index(drop=True)
         dfTurtleZ = self.groupByArg(dfTurtle, "SZ", "TwistZ_").reset_index(drop=True)
         dfBufferS = self.groupByArg(dfBuffer, "SZ", "TwistS_").reset_index(drop=True)
         dfBufferZ = self.groupByArg(dfBuffer, "SZ", "TwistZ_").reset_index(drop=True)
+        dfFullS = self.groupByArg(dfFull, "SZ", "TwistS_").reset_index(drop=True)
+        dfFullZ = self.groupByArg(dfFull, "SZ", "TwistZ_").reset_index(drop=True)
 
         self.dfMovingAvgTurtleS = self.calculateMovingAverage(dfTurtleS)
         self.dfMovingAvgTurtleZ = self.calculateMovingAverage(dfTurtleZ)
         self.dfMovingAvgBufferS = self.calculateMovingAverage(dfBufferS)
         self.dfMovingAvgBufferZ = self.calculateMovingAverage(dfBufferZ)
+        self.dfMovingAvgFullS = self.calculateMovingAverage(dfFullS)
+        self.dfMovingAvgFullZ = self.calculateMovingAverage(dfFullZ)
 
 # endregion
 
 # region Helper methods for data frames
 
     def addNanRow(self, df):
-        df["next_speed"] = df["Speed"].shift(-1)
+        df["next_speed"] = df["V"].shift(-1)
 
         for row in df.itertuples():
-            if row.Speed != row.next_speed:
-                newRowS = pd.DataFrame([[row.time + datetime.timedelta(0,1), np.nan, "TwistS_", row.Speed, row.next_speed]], columns = df.columns)
-                newRowZ = pd.DataFrame([[row.time + datetime.timedelta(0,1), np.nan, "TwistZ_", row.Speed, row.next_speed]], columns = df.columns)
+            if row.V != row.next_speed:
+                newRowS = pd.DataFrame([[row.time + datetime.timedelta(0,1), np.nan, "TwistS_", row.V, row.next_speed]], columns = df.columns)
+                newRowZ = pd.DataFrame([[row.time + datetime.timedelta(0,1), np.nan, "TwistZ_", row.V, row.next_speed]], columns = df.columns)
 
                 df = df.append(newRowS)
                 df = df.append(newRowZ)
@@ -216,21 +273,42 @@ class Chart:
         ax.set_ylabel(title)
 
     def addDataToPlot(self, ax1, ax2):
-        ax1.plot(self.dfUnknownTwistS['time'], self.dfUnknownTwistS['avg_tpm'], label = "Unknown")
-        ax1.plot(self.dfTurtleTwistS['time'], self.dfTurtleTwistS['avg_tpm'], label = "Turtle")
-        ax1.plot(self.dfBufferTwistS['time'], self.dfBufferTwistS['avg_tpm'], label = "Buffer")
-        ax1.plot(self.dfFullTwistS['time'], self.dfFullTwistS['avg_tpm'], label = "Full")
-        ax1.plot(self.dfMovingAvgAllS['time'], self.dfMovingAvgAllS['MovingAvg'], label = "AVG all")
+
+        if self.dfUnknownTwistS is not None:
+            ax1.plot(self.dfUnknownTwistS['time'], self.dfUnknownTwistS['avg_tpm'], label = "Unknown")
+
+        if self.dfTurtleTwistS is not None:
+            ax1.plot(self.dfTurtleTwistS['time'], self.dfTurtleTwistS['avg_tpm'], label = "Turtle")
+
+        if self.dfBufferTwistS is not None:
+            ax1.plot(self.dfBufferTwistS['time'], self.dfBufferTwistS['avg_tpm'], label = "Buffer")
+
+        if self.dfFullTwistS is not None:
+            ax1.plot(self.dfFullTwistS['time'], self.dfFullTwistS['avg_tpm'], label = "Full")
+
+        if self.dfMovingAvgAllS is not None:
+            ax1.plot(self.dfMovingAvgAllS['time'], self.dfMovingAvgAllS['MovingAvg'], label = "AVG all")
         # ax1.plot(self.dfMovingAvgTurtleS['time'], self.dfMovingAvgTurtleS['MovingAvg'], label = "AVG Turtle")
         # ax1.plot(self.dfMovingAvgBufferS['time'], self.dfMovingAvgBufferS['MovingAvg'], label = "AVG Buffer")
+        # ax1.plot(self.dfMovingAvgFullS['time'], self.dfMovingAvgFullS['MovingAvg'], label = "AVG Full")
 
-        ax2.plot(self.dfUnknownTwistZ['time'], self.dfUnknownTwistZ['avg_tpm'], label = "Unknown")
-        ax2.plot(self.dfTurtleTwistZ['time'], self.dfTurtleTwistZ['avg_tpm'], label = "Turtle")
-        ax2.plot(self.dfBufferTwistZ['time'], self.dfBufferTwistZ['avg_tpm'], label = "Buffer")
-        ax2.plot(self.dfFullTwistZ['time'], self.dfFullTwistZ['avg_tpm'], label = "Full")
-        ax2.plot(self.dfMovingAvgAllZ['time'], self.dfMovingAvgAllZ['MovingAvg'], label = "AVG all")
+        if self.dfUnknownTwistZ is not None:
+            ax2.plot(self.dfUnknownTwistZ['time'], self.dfUnknownTwistZ['avg_tpm'], label = "Unknown")
+
+        if self.dfTurtleTwistZ is not None:
+            ax2.plot(self.dfTurtleTwistZ['time'], self.dfTurtleTwistZ['avg_tpm'], label = "Turtle")
+
+        if self.dfBufferTwistZ is not None:
+            ax2.plot(self.dfBufferTwistZ['time'], self.dfBufferTwistZ['avg_tpm'], label = "Buffer")
+
+        if self.dfFullTwistZ is not None:
+            ax2.plot(self.dfFullTwistZ['time'], self.dfFullTwistZ['avg_tpm'], label = "Full")
+
+        if self.dfMovingAvgAllZ is not None:
+            ax2.plot(self.dfMovingAvgAllZ['time'], self.dfMovingAvgAllZ['MovingAvg'], label = "AVG all")
         # ax2.plot(self.dfMovingAvgTurtleZ['time'], self.dfMovingAvgTurtleZ['MovingAvg'], label = "AVG Turtle")
         # ax2.plot(self.dfMovingAvgBufferZ['time'], self.dfMovingAvgBufferZ['MovingAvg'], label = "AVG Buffer")
+        # ax2.plot(self.dfMovingAvgFullZ['time'], self.dfMovingAvgFullZ['MovingAvg'], label = "AVG Full")
 
 # endregion
 
@@ -243,16 +321,17 @@ class Chart:
 
         # Update raw data table
         print("Update original data frame ...")
-        self.addAvgTpm()
         self.addDateTime()
-        self.sortData()
+        
+        self.addAvgTpm()
         self.removNullValues()
-
+        self.sortData()
+        
         # Split data in data frames for chart
         print("Split data in separate data frames ...")
         self.dataFrameForEachSpeed()
         self.dataFrameForMovingAverage()
-        self.dataFrameForMovingAveragePerSpeed()
+        # self.dataFrameForMovingAveragePerSpeed()
         
         # Show chart
         print("Plot chart ...")
@@ -260,35 +339,16 @@ class Chart:
 
 
 if __name__ == "__main__":
+    path = r"E:\Gilbos Machines\SmarTwist\CableTwistSensor\CTS data\20210622_Demo\New folder"
+    chart = Chart(path, "26040.99")
+    chart.main()
 
-    # Create chart for each ST.
-    # ids = [1,2,4,6,7,8,9,10,11,12,14]
-
-    # for i in ids:
+    # for i in range(1, 16):
     #     id = f"26134.{i}"
 
-    #     chart = Chart(id)
-    #     chart.main()
+    #     try:
+    #         chart = Chart(path, id)
+    #         chart.main()
 
-    # path = f"E:\\Gilbos Machines\\SmarTwist\\CTS\\20210107_Dixie\\csv\\W2021_1 per ST"    
-    # id = "26134.1"
-    # path = f"{path}\\{id}"
-
-    # path = r"E:\Gilbos Machines\SmarTwist\CTS\20210212_Dixie\W2021_6 - kopie"
-    # id = "26134.1"
-
-    path = r"E:\Gilbos Machines\SmarTwist\Maintenance\20210305 Dixie\CTS\W2021_9"
-    # id = "26040.99"
-
-    # chart = Chart(path, id)
-    # chart.main()
-
-    for i in range(1, 16):
-        id = f"26134.{i}"
-
-        try:
-            chart = Chart(path, id)
-            chart.main()
-
-        except:
-            print(f"No data for {id}")
+    #     except:
+    #         print(f"No data for {id}")
